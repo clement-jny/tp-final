@@ -102,6 +102,10 @@ contract Voting is Ownable {
 		currentWorkflowStatus = _newWorkflowStatus;
 		emit WorkflowStatusChange(currentWorkflowStatus, _newWorkflowStatus);
     }
+    /**
+    * @notice Change le statut du workflow au statut suivant.
+    * @dev Seul le propriétaire peut appeler cette fonction.
+    */
     function changeToNextWorkflowStatus() public onlyOwner {
         WorkflowStatus currentStatus = getWorkflowStatus();
 
@@ -157,14 +161,6 @@ contract Voting is Ownable {
         emit VoterRegistered(_voter);
     }
 
-    /**
-     * @notice Démarre une session d'enregistrement de propositions.
-     * @dev Seul l'owner peut appeler cette fonction.
-     */
-    //function startProposalsRegistrationSession() public onlyOwner {
-	//	changeWorkflowStatus(WorkflowStatus.ProposalsRegistrationStarted);
-    //}
-
 	/**
 	* @notice Vérifie si une proposition est déjà enregistrée.
 	* @param _proposalId L'identifiant de la proposition à vérifier.
@@ -198,24 +194,12 @@ contract Voting is Ownable {
         emit ProposalRegistered(_proposalId);
 	}
 
-	/**
-	 * @notice Clôture la session d'enregistrement des propositions.
-	 * @dev Seul l'owner peut appeler cette fonction.
-	 */
-	//function endProposalsRegistrationSession() public onlyOwner {
-	//	require(getWorkflowStatus() == WorkflowStatus.ProposalsRegistrationStarted, "Not in proposals registration session");
-	//	changeWorkflowStatus(WorkflowStatus.ProposalsRegistrationEnded);
-	//}
 
-
-
-	/**
-     * @notice Démarre une session de vote.
-     * @dev Seul l'owner peut appeler cette fonction.
-     */
-	//function startVotingSession() public onlyOwner {
-	//	changeWorkflowStatus(WorkflowStatus.VotingSessionStarted);
-	//}
+    /**
+    * @notice Enregistre le vote d'un électeur pour une proposition.
+    * @dev L'électeur doit être enregistré et n'avoir pas encore voté.
+    * @param _proposalId L'identifiant de la proposition choisie.
+    */
 	function vote(uint _proposalId) public isRegistered(msg.sender) {
 		require(getWorkflowStatus() == WorkflowStatus.VotingSessionStarted, "Voting session not started");
 		require(!whitelist[msg.sender].hasVoted, "Voter already voted");
@@ -227,19 +211,13 @@ contract Voting is Ownable {
 
 		emit Voted(msg.sender, _proposalId);
 	}
-	/**
-	 * @notice Clôture la session de vote.
-	 * @dev Seul l'owner peut appeler cette fonction.
-	 */
-	//function endVotingSession() public onlyOwner {
-	//	require(getWorkflowStatus() == WorkflowStatus.VotingSessionStarted, "Not in vote session");
-	//	changeWorkflowStatus(WorkflowStatus.VotingSessionEnded);
-	//}
 
 
+    /**
+    * @notice Compte les votes et détermine la proposition gagnante.
+    * @dev Fonction privée appelée automatiquement à la fin du vote.
+    */
 	function tallyVotes() private {
-		//changeWorkflowStatus(WorkflowStatus.VotesTallied);
-
 		uint winningVoteCount = 0;
 		for (uint i = 0; i < proposalIds.length; i++) {
 			if (proposals[i].voteCount > winningVoteCount) {
@@ -249,6 +227,11 @@ contract Voting is Ownable {
 		}
 	}
 
+    /**
+    * @notice Récupère la description de la proposition gagnante.
+    * @dev Seul le propriétaire peut accéder à cette information.
+    * @return La description de la proposition ayant reçu le plus de votes.
+    */
     function getWinner() public view onlyOwner returns (string memory) {
         return proposals[winningProposalId].description;
     }
